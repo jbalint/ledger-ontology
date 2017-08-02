@@ -1,0 +1,192 @@
+# Ledger ontology inspired by ledger-cli
+
+# Not a "port" of the data model, but simplified a bit. Commidities
+# are not supported and all amounts are assumed to be a consistent
+# currency.
+
+@prefix ledger: <https://github.com/jbalint/ledger-ontology#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ledger:Account
+  rdf:type owl:Class ;
+  rdfs:subClassOf owl:Thing ;
+.
+ledger:AccountReconciliation
+  rdf:type owl:Class ;
+  rdfs:label "A event representing an account being reconciled with the account provider (bank)" ;
+  rdfs:subClassOf owl:Thing ;
+.
+ledger:Adjustment
+  rdf:type owl:Class ;
+  rdfs:label "An adjustment is the forcing of an account's balance to given value due to factors outside the system's observation" ;
+  rdfs:subClassOf ledger:Transaction ;
+.
+ledger:Asset
+  rdf:type owl:Class ;
+  rdfs:comment "An account which is an asset such as a checking or brokerage account" ;
+  rdfs:subClassOf ledger:Account ;
+.
+ledger:ExpenseCategory
+  rdf:type owl:Class ;
+  rdfs:label "A class of expense (e.g. travel/mortgage/homeimprovement)" ;
+  rdfs:subClassOf owl:Thing ;
+.
+ledger:Income
+  rdf:type owl:Class ;
+  rdf:type [
+      rdf:type owl:Restriction ;
+      rdfs:comment "TODO: This is a CONSTRAINT" ;
+      owl:cardinality "1"^^xsd:nonNegativeInteger ;
+      owl:onProperty ledger:destination ;
+    ] ;
+  rdfs:label "A payee is the target of money for a Payment" ;
+  rdfs:subClassOf ledger:Transaction ;
+.
+ledger:Liability
+  rdf:type owl:Class ;
+  rdfs:label "An account which is a liability such as a credit card or loan" ;
+  rdfs:subClassOf ledger:Account ;
+.
+ledger:OpeningBalance
+  rdf:type owl:Class ;
+  rdfs:label "Setting the initial balance of an account before any transactions take place. Any subsequent adjustments to the balance should be represented as Adjustments." ;
+  rdfs:subClassOf ledger:Adjustment ;
+.
+ledger:Payment
+  rdf:type owl:Class ;
+  rdf:type [
+      rdf:type owl:Restriction ;
+      rdfs:comment "TODO: This is a CONSTRAINT" ;
+      owl:cardinality "1"^^xsd:nonNegativeInteger ;
+      owl:onProperty ledger:source ;
+    ] ;
+  rdf:type [
+      rdf:type owl:Restriction ;
+      rdfs:comment "TODO: This is a CONSTRAINT" ;
+      owl:minCardinality "1"^^xsd:nonNegativeInteger ;
+      owl:onProperty ledger:post ;
+    ] ;
+  rdfs:label "A payment represents the movement of money from an account to an external (to the ledger system) payee" ;
+  rdfs:subClassOf ledger:Transaction ;
+.
+ledger:Post
+  rdf:type owl:Class ;
+  rdfs:label "A post is sub-component of a Payment" ;
+  rdfs:subClassOf owl:Thing ;
+.
+ledger:Salary
+  rdf:type owl:Class ;
+  rdfs:label "Money paid from employer" ;
+  rdfs:subClassOf ledger:Income ;
+.
+ledger:Transaction
+  rdf:type owl:Class ;
+  rdfs:label "A transaction represents the movement of money" ;
+  rdfs:subClassOf owl:Thing ;
+.
+ledger:Transfer
+  rdf:type owl:Class ;
+  rdf:type [
+      rdf:type owl:Restriction ;
+      rdfs:comment "TODO: This is a CONSTRAINT" ;
+      owl:cardinality "1"^^xsd:nonNegativeInteger ;
+      owl:onProperty ledger:destination ;
+    ] ;
+  rdf:type [
+      rdf:type owl:Restriction ;
+      rdfs:comment "TODO: This is a CONSTRAINT" ;
+      owl:cardinality "1"^^xsd:nonNegativeInteger ;
+      owl:onProperty ledger:source ;
+    ] ;
+  rdfs:label "A transfer represents the movement of money from one account to another" ;
+  rdfs:subClassOf ledger:Transaction ;
+.
+ledger:account
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain ledger:AccountReconciliation ;
+  rdfs:label "The account which was reconciled" ;
+  rdfs:range ledger:Account ;
+.
+ledger:amount
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain [
+      rdf:type owl:Class ;
+      owl:unionOf (
+          ledger:Transaction
+          ledger:Post
+        ) ;
+    ] ;
+  rdfs:label "The amount of a transaction, debited from source and credited to destination (at least one of which should be an account)" ;
+  rdfs:range xsd:decimal ;
+.
+ledger:balance
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain ledger:AccountReconciliation ;
+  rdfs:label "The balance of the account at time of reconciliation" ;
+  rdfs:range xsd:decimal ;
+.
+ledger:category
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain ledger:Post ;
+  rdfs:range ledger:ExpenseCategory ;
+.
+ledger:destination
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain ledger:Transaction ;
+  rdfs:label "The destination account of money for a transaction" ;
+  rdfs:range ledger:Account ;
+.
+ledger:name
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain ledger:Account ;
+  rdfs:label "Account name" ;
+  rdfs:range xsd:string ;
+.
+ledger:note
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "A note about a transaction/post" ;
+  rdfs:range xsd:string ;
+.
+ledger:payee
+  rdf:type rdf:Property ;
+  rdfs:domain ledger:Payment ;
+  rdfs:label "The target of money for a Payment" ;
+.
+ledger:payor
+  rdf:type rdf:Property ;
+  rdfs:domain ledger:Income ;
+  rdfs:label "The source of money for an Income transaction" ;
+.
+ledger:post
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain ledger:Payment ;
+  rdfs:label "A post within a Payment" ;
+  rdfs:range ledger:Post ;
+.
+ledger:reconciledAt
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain [
+      rdf:type owl:Class ;
+      owl:unionOf (
+          ledger:Transaction
+          ledger:AccountReconciliation
+        ) ;
+    ] ;
+  rdfs:label "The date/time at which a transaction is reconciled" ;
+  rdfs:range xsd:dateTime ;
+.
+ledger:source
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain ledger:Transaction ;
+  rdfs:label "The source account of money for a transaction" ;
+  rdfs:range ledger:Account ;
+.
+ledger:time
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain ledger:Transaction ;
+  rdfs:label "The date/time at which a transaction occurs" ;
+  rdfs:range xsd:dateTime ;
+.
